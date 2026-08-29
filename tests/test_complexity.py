@@ -1,3 +1,4 @@
+import pytest
 from src.complexity import calculate_complexity
 
 
@@ -136,3 +137,36 @@ def classify(number):
     result = calculate_complexity(source)
 
     assert result["classify"] == 3
+
+
+# -------------------------
+# Invalid Input Tests
+# -------------------------
+
+
+# IT-01
+def test_none_input_is_rejected():
+    with pytest.raises(TypeError):
+        calculate_complexity(None)
+
+
+# IT-02
+def test_integer_input_is_rejected():
+    with pytest.raises(TypeError):
+        calculate_complexity(123)
+
+
+# IT-03
+def test_list_input_is_rejected():
+    with pytest.raises(TypeError):
+        calculate_complexity(["def test():", "    pass"])
+
+
+# IT-04
+def test_invalid_python_syntax_raises_syntax_error():
+    source = """
+def broken_function(
+"""
+
+    with pytest.raises(SyntaxError):
+        calculate_complexity(source)
