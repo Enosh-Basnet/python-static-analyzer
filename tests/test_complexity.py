@@ -70,3 +70,69 @@ def is_positive(number):
 
     assert result["greet"] == 1
     assert result["is_positive"] == 2
+
+
+
+# -------------------------
+# Boundary Tests
+# -------------------------
+
+# BT-01
+def test_empty_source_returns_empty_result():
+    source = ""
+
+    result = calculate_complexity(source)
+
+    assert result == {}
+
+
+# BT-02
+def test_function_with_two_boolean_operands_has_complexity_two():
+    source = """
+def both_true(a, b):
+    return a and b
+"""
+
+    result = calculate_complexity(source)
+
+    assert result["both_true"] == 2
+
+
+# BT-03
+def test_function_with_three_boolean_operands_has_complexity_three():
+    source = """
+def all_true(a, b, c):
+    return a and b and c
+"""
+
+    result = calculate_complexity(source)
+
+    assert result["all_true"] == 3
+
+
+# BT-04
+def test_function_with_one_ternary_expression_has_complexity_two():
+    source = """
+def maximum(a, b):
+    return a if a > b else b
+"""
+
+    result = calculate_complexity(source)
+
+    assert result["maximum"] == 2
+
+
+# BT-05
+def test_if_elif_structure_counts_each_decision():
+    source = """
+def classify(number):
+    if number > 0:
+        return "positive"
+    elif number < 0:
+        return "negative"
+    return "zero"
+"""
+
+    result = calculate_complexity(source)
+
+    assert result["classify"] == 3
