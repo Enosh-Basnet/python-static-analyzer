@@ -164,3 +164,28 @@ def broken_function(
 
     with pytest.raises(SyntaxError):
         find_unused_variables(source)
+
+
+
+# RT-03
+def test_read_before_assignment_does_not_count_as_subsequent_use():
+    source = """
+print(value)
+value = 10
+"""
+
+    result = find_unused_variables(source)
+
+    assert result["<module>"] == ["value"]
+
+
+# RT-04
+def test_augmented_assignment_counts_as_variable_use():
+    source = """
+value = 10
+value += 1
+"""
+
+    result = find_unused_variables(source)
+
+    assert result == {}
