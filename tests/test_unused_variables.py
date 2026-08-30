@@ -66,3 +66,68 @@ def process():
 
     assert result["<module>"] == ["module_value"]
     assert result["process"] == ["local_value"]
+
+
+    # -------------------------
+# Boundary Tests
+# -------------------------
+
+
+# BT-06
+def test_empty_source_returns_no_unused_variables():
+    source = ""
+
+    result = find_unused_variables(source)
+
+    assert result == {}
+
+
+# BT-07
+def test_placeholder_underscore_is_ignored():
+    source = """
+_ = 10
+"""
+
+    result = find_unused_variables(source)
+
+    assert result == {}
+
+
+# BT-08
+def test_variable_read_exactly_once_is_not_unused():
+    source = """
+value = 10
+print(value)
+"""
+
+    result = find_unused_variables(source)
+
+    assert result == {}
+
+
+# BT-09
+def test_multiple_unused_variables_in_same_scope_are_all_reported():
+    source = """
+first = 10
+second = 20
+"""
+
+    result = find_unused_variables(source)
+
+    assert set(result["<module>"]) == {"first", "second"}
+
+
+# BT-10
+def test_same_variable_name_is_analyzed_independently_in_different_scopes():
+    source = """
+value = 10
+
+def process():
+    value = 20
+    return 1
+"""
+
+    result = find_unused_variables(source)
+
+    assert result["<module>"] == ["value"]
+    assert result["process"] == ["value"]
