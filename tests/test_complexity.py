@@ -213,3 +213,37 @@ def positive_numbers(numbers):
     assert result["positive_numbers"] == 2
 
 
+    # RT-01
+def test_methods_with_same_name_in_different_classes_are_reported_separately():
+    source = """
+class FirstAnalyzer:
+    def process(self):
+        return True
+
+class SecondAnalyzer:
+    def process(self, value):
+        if value:
+            return True
+        return False
+"""
+
+    result = calculate_complexity(source)
+
+    assert len(result) == 2
+
+    # RT-02
+def test_match_cases_contribute_to_complexity():
+    source = """
+def classify(command):
+    match command:
+        case "start":
+            return 1
+        case "stop":
+            return 2
+        case _:
+            return 0
+"""
+
+    result = calculate_complexity(source)
+
+    assert result["classify"] == 3
