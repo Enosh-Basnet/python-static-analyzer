@@ -26,17 +26,65 @@ class VariableScopeVisitor(ast.NodeVisitor):
     def __init__(self, root: ast.AST) -> None:
         self.root = root
         self.assigned: list[str] = []
-        self.used: set[str] = set()
+        self.used_after_assign: set[str] = set()
+
+    def _record_read(self, name: str) -> None:
+        if name == "_":
+            return
+        if name in self.assigned:
+            self.used_after_assign.add(name)
+
+    def _record_write(self, name: str) -> None:
+        if name == "_":
+            return
+        if name not in self.assigned:
+            self.assigned.append(name)
 
     def visit_Name(self, node: ast.Name) -> None:
-        if node.id == "_":
-            return
+        if isinstance(node.ctx, ast.Load):
+            self._record_read(node.id)
+        elif isinstance(node.ctx, ast.Store):
+            self._record_write(node.id)
 
-        if isinstance(node.ctx, ast.Store):
-            if node.id not in self.assigned:
-                self.assigned.append(node.id)
-        elif isinstance(node.ctx, ast.Load):
-            self.used.add(node.id)
+    def visit_Assign(self, node: ast.Assign) -> None:
+        # Evaluate RHS value expression before LHS target assignments
+        self.visit(node.value)
+        for target in node.targets:
+            self.visit(target)
+
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
+        if node.value:
+            self.visit(node.value)
+        self.visit(node.annotation)
+        self.visit(node.target)
+
+    def visit_AugAssign(self, node: ast.AugAssign) -> None:
+        # Augmented assignment reads target variable first, evaluates RHS, then writes target
+        if isinstance(node.target, ast.Name):
+            self._record_read(node.target.id)
+        else:
+            self.visit(node.target)
+
+        self.visit(node.value)
+
+        if isinstance(node.target, ast.Name):
+            self._record_write(node.target.id)
+
+    def visit_For(self, node: ast.For) -> None:
+        self.visit(node.iter)
+        self.visit(node.target)
+        for stmt in node.body:
+            self.visit(stmt)
+        for stmt in node.orelse:
+            self.visit(stmt)
+
+    def visit_AsyncFor(self, node: ast.AsyncFor) -> None:
+        self.visit(node.iter)
+        self.visit(node.target)
+        for stmt in node.body:
+            self.visit(stmt)
+        for stmt in node.orelse:
+            self.visit(stmt)
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         if node is self.root:
@@ -62,7 +110,7 @@ def find_unused_variables(source: str) -> dict[str, list[str]]:
         visitor = VariableScopeVisitor(scope_node)
         visitor.visit(scope_node)
 
-        unused = [var for var in visitor.assigned if var not in visitor.used]
+        unused = [var for var in visitor.assigned if var not in visitor.used_after_assign]
         if unused:
             results[scope_name] = unused
 
