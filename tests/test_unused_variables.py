@@ -1,3 +1,4 @@
+import pytest
 from src.unused_variables import find_unused_variables
 
 
@@ -131,3 +132,35 @@ def process():
 
     assert result["<module>"] == ["value"]
     assert result["process"] == ["value"]
+
+# -------------------------
+# Invalid Input Tests
+# -------------------------
+
+
+# IT-05
+def test_none_input_is_rejected():
+    with pytest.raises(TypeError):
+        find_unused_variables(None)
+
+
+# IT-06
+def test_integer_input_is_rejected():
+    with pytest.raises(TypeError):
+        find_unused_variables(123)
+
+
+# IT-07
+def test_list_input_is_rejected():
+    with pytest.raises(TypeError):
+        find_unused_variables(["value = 10"])
+
+
+# IT-08
+def test_invalid_python_syntax_raises_syntax_error():
+    source = """
+def broken_function(
+"""
+
+    with pytest.raises(SyntaxError):
+        find_unused_variables(source)
