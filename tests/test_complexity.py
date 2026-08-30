@@ -213,7 +213,7 @@ def positive_numbers(numbers):
     assert result["positive_numbers"] == 2
 
 
-    # RT-01
+# RT-01
 def test_methods_with_same_name_in_different_classes_are_reported_separately():
     source = """
 class FirstAnalyzer:
@@ -229,7 +229,8 @@ class SecondAnalyzer:
 
     result = calculate_complexity(source)
 
-    assert len(result) == 2
+    assert result["FirstAnalyzer.process"] == 1
+    assert result["SecondAnalyzer.process"] == 2
 
     # RT-02
 def test_match_cases_contribute_to_complexity():
