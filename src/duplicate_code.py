@@ -25,21 +25,52 @@ def find_duplicate_code(
     if len(logical_lines) < min_block_size:
         return []
 
-    # Map block tuples to their starting source line numbers using a sliding window
-    blocks: dict[tuple[str, ...], list[int]] = defaultdict(list)
+    # Map block content to starting logical indices and source line numbers
+    blocks: dict[tuple[str, ...], dict[str, list[int]]] = defaultdict(
+        lambda: {"logical_indices": [], "line_numbers": []}
+    )
+
     for i in range(len(logical_lines) - min_block_size + 1):
         window = logical_lines[i : i + min_block_size]
         block_content = tuple(line for _, line in window)
         start_line = window[0][0]
-        blocks[block_content].append(start_line)
+        blocks[block_content]["logical_indices"].append(i)
+        blocks[block_content]["line_numbers"].append(start_line)
 
-    # Filter for blocks occurring more than once
-    results: list[dict] = []
-    for block_content, occurrences in blocks.items():
-        if len(occurrences) > 1:
-            results.append({
+    # Collect candidate blocks that occur more than once
+    candidates = []
+    for block_content, data in blocks.items():
+        if len(data["line_numbers"]) > 1:
+            candidates.append({
                 "block": block_content,
-                "occurrences": occurrences,
+                "occurrences": data["line_numbers"],
+                "logical_indices": set(data["logical_indices"]),
+                "first_idx": data["logical_indices"][0],
             })
 
-    return results
+    # Sort candidates by their initial logical index to establish evaluation order
+    candidates.sort(key=lambda c: c["first_idx"])
+
+    # Filter out shifted windows resulting from consecutive block repetitions
+    accepted_candidates = []
+    for cand in candidates:
+        is_shifted = False
+        cand_indices = cand["logical_indices"]
+
+        for prev in accepted_candidates:
+            prev_indices = prev["logical_indices"]
+            k = cand["first_idx"] - prev["first_idx"]
+            if k > 0 and all((idx - k) in prev_indices for idx in cand_indices):
+                is_shifted = True
+                break
+
+        if not is_shifted:
+            accepted_candidates.append(cand)
+
+    return [
+        {
+            "block": cand["block"],
+            "occurrences": cand["occurrences"],
+        }
+        for cand in accepted_candidates
+    ]
