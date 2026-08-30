@@ -170,3 +170,44 @@ def broken_function(
 
     with pytest.raises(SyntaxError):
         calculate_complexity(source)
+
+
+
+# NT-06
+def test_function_with_one_while_loop_has_complexity_two():
+    source = """
+def countdown(number):
+    while number > 0:
+        number -= 1
+"""
+
+    result = calculate_complexity(source)
+
+    assert result["countdown"] == 2
+
+
+# NT-07
+def test_function_with_one_exception_handler_has_complexity_two():
+    source = """
+def divide(a, b):
+    try:
+        return a / b
+    except ZeroDivisionError:
+        return None
+"""
+
+    result = calculate_complexity(source)
+
+    assert result["divide"] == 2
+
+
+# NT-08
+def test_comprehension_filter_increases_complexity():
+    source = """
+def positive_numbers(numbers):
+    return [number for number in numbers if number > 0]
+"""
+
+    result = calculate_complexity(source)
+
+    assert result["positive_numbers"] == 2
